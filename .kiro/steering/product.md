@@ -1,28 +1,29 @@
 # Product Overview
 
-## National Parks MCP Server
+Python MCP National Parks Server - A Model Context Protocol (MCP) server implementation that provides access to U.S. National Parks data through the National Park Service API.
 
-This is a Model Context Protocol (MCP) server that provides real-time access to U.S. National Parks data through the National Park Service (NPS) API. The server enables AI assistants like Claude to help users discover, explore, and plan visits to national parks.
+## Purpose
 
-## Core Functionality
+Enables AI assistants and applications to query National Parks information including park details, alerts, visitor centers, campgrounds, and events through standardized MCP tools.
 
-The server exposes 6 main tools for park information:
+## Key Features
 
-- **findParks** - Search and filter parks by state, activities, or keywords
-- **getParkDetails** - Get comprehensive information about specific parks
-- **getAlerts** - Check current closures, hazards, and important notices
-- **getVisitorCenters** - Find visitor centers and their operating hours
-- **getCampgrounds** - Discover campgrounds and their amenities
-- **getEvents** - Find upcoming park events and programs
+- Six MCP tools for accessing National Parks data
+- Integration with National Park Service API
+- Type-safe request/response handling with Pydantic
+- Structured logging with contextual information
+- Comprehensive error handling and validation
 
-## Target Use Cases
+## Tools Provided
 
-- Trip planning and park discovery
-- Real-time safety and closure information
-- Activity-based park recommendations
-- Campground and accommodation research
-- Event and program discovery
+1. `findParks` - Search parks by state, activity, or keyword
+2. `getParkDetails` - Get detailed information about a specific park
+3. `getAlerts` - Check current park alerts and closures
+4. `getVisitorCenters` - Find visitor centers and operating hours
+5. `getCampgrounds` - Discover campgrounds and amenities
+6. `getEvents` - Find upcoming park events and programs
 
-## Distribution
+## External Dependencies
 
-The server is distributed via npm and can be installed through Smithery for easy Claude Desktop integration. Users need a free NPS API key to access the service.
+- National Park Service API (requires free API key from https://www.nps.gov/subjects/developer/get-started.htm)
+- API key must be set in `.env` file as `NPS_API_KEY`

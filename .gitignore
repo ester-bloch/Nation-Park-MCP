@@ -57,3 +57,18 @@ Thumbs.db
 
 # Exclude existing TypeScript project
 mcp-server-nationalparks/
+# Environment variables (Crucial for API keys)
+.env
+.env.local
+.env.shared
+
+# Logging
+*.log
+logs/
+
+# MCP Specific
+.mcp/
+mcp_usage.json
+
+# Local development
+config.local.yaml

@@ -1,50 +1,87 @@
 # Technology Stack
 
-## Core Technologies
-
-- **Runtime**: Node.js with ES modules
-- **Language**: TypeScript (ES2022 target, Node16 module resolution)
-- **MCP Framework**: @modelcontextprotocol/sdk for server implementation
-- **HTTP Client**: Axios for NPS API integration
-- **Validation**: Zod for schema validation and type safety
-- **Environment**: dotenv for configuration management
-
-## Key Dependencies
-
-### Production
-- `@modelcontextprotocol/sdk` - MCP server framework
-- `axios` - HTTP client for external API calls
-- `zod` - Runtime type validation and schema generation
-- `dotenv` - Environment variable management
-
-### Development
-- `typescript` - TypeScript compiler
-- `@types/node` - Node.js type definitions
-- `ts-node` - TypeScript execution for development
-
 ## Build System
 
-### Commands
-- `npm run build` - Compile TypeScript to JavaScript and set executable permissions
-- `npm test` - Currently not implemented (placeholder)
+- **Package Manager**: Poetry (primary) or pip
+- **Python Version**: 3.9+
+- **Build Backend**: poetry-core
 
-### Build Configuration
-- **Input**: `src/` directory
-- **Output**: `build/` directory
-- **Entry Point**: `build/index.js` (executable)
-- **Module System**: ES modules with `.js` extensions in imports
+## Core Dependencies
 
-## External API Integration
+- **fastmcp** (^0.1.0) - FastMCP SDK for MCP server implementation
+- **httpx** (^0.27.0) - Modern async HTTP client for API requests
+- **pydantic** (^2.0.0) - Data validation and settings management
+- **pydantic-settings** (^2.0.0) - Environment-based configuration
+- **python-dotenv** (^1.0.0) - Environment variable loading
+- **structlog** (^23.0.0) - Structured logging
 
-### National Park Service API
-- **Base URL**: https://developer.nps.gov/api/v1
-- **Authentication**: API key via `X-Api-Key` header
-- **Rate Limiting**: Handled with axios interceptors
-- **Environment Variable**: `NPS_API_KEY` required
+## Development Tools
 
-## Distribution
+- **pytest** - Testing framework with coverage, mocking, and property-based testing (hypothesis)
+- **black** - Code formatter (line length: 88)
+- **isort** - Import sorting (black-compatible profile)
+- **flake8** - Linting (extends ignore: E203, W503, E501)
+- **mypy** - Static type checking (strict mode enabled)
+- **pre-commit** - Git hooks for code quality
 
-- **Package Manager**: npm
-- **Registry**: Published to npm registry
-- **Installation**: Available via Smithery (`npx -y @smithery/cli install`)
-- **Execution**: Runs as CLI tool via `npx mcp-server-nationalparks`
+## Common Commands
+
+### Setup
+```bash
+# Install dependencies
+poetry install
+
+# Install with dev dependencies
+poetry install --with dev
+
+# Install pre-commit hooks
+pre-commit install
+```
+
+### Running
+```bash
+# Start the server
+poetry run python-mcp-nationalparks
+
+# Or with Python directly
+python -m src.main
+```
+
+### Testing
+```bash
+# Run all tests
+poetry run pytest
+
+# Run with coverage report
+poetry run pytest --cov=src --cov-report=html
+
+# Run specific test types
+poetry run pytest tests/unit/
+poetry run pytest tests/integration/
+poetry run pytest tests/property/
+```
+
+### Code Quality
+```bash
+# Format code
+poetry run black src tests
+
+# Sort imports
+poetry run isort src tests
+
+# Lint
+poetry run flake8 src tests
+
+# Type check
+poetry run mypy src
+
+# Run all pre-commit hooks
+pre-commit run --all-files
+```
+
+## Configuration Files
+
+- `pyproject.toml` - Poetry dependencies, tool configurations (black, isort, mypy, pytest, coverage)
+- `.flake8` - Flake8 linting rules
+- `.pre-commit-config.yaml` - Pre-commit hook definitions
+- `.env` - Environment variables (not in git, use `.env.example` as template)
