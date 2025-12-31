@@ -135,7 +135,6 @@ def handle_not_found_error(resource_type: str, resource_id: str) -> Dict[str, An
         resource_id=resource_id,
     )
 
-    # Format error message to match TypeScript implementation
     error_message = f"{resource_type.capitalize()} not found"
 
     response = ErrorResponse(

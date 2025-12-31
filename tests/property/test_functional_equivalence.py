@@ -1,8 +1,4 @@
-"""Property-based tests for functional equivalence with TypeScript implementation.
 
-Feature: python-mcp-server, Property 1: Functional Equivalence with TypeScript Implementation
-Validates: Requirements 1.2, 1.3, 1.4
-"""
 
 import json
 from unittest.mock import Mock, patch
@@ -17,10 +13,7 @@ from src.handlers.find_parks import find_parks
 from src.handlers.get_park_details import get_park_details
 from src.models.requests import FindParksRequest, GetParkDetailsRequest
 
-# Property 1: Functional Equivalence with TypeScript Implementation
-# For any valid tool input that was supported by the TypeScript server,
-# the Python server should return functionally equivalent data structures
-# and handle errors in the same manner
+
 
 
 @pytest.fixture(autouse=True)
@@ -175,21 +168,16 @@ def mock_api_client():
     q=st.one_of(st.none(), st.text(min_size=1, max_size=50)),
 )
 def test_find_parks_response_structure(mock_api_client, state_code, limit, q):
-    """
-    Property: For any valid FindParks input, the response structure should match
-    the TypeScript implementation's structure.
-    """
+
     request = FindParksRequest(stateCode=state_code, q=q, limit=limit)
     result = find_parks(request)
 
-    # Verify response structure matches TypeScript implementation
     assert isinstance(result, dict), "Response should be a dictionary"
     assert "total" in result, "Response should have 'total' field"
     assert "limit" in result, "Response should have 'limit' field"
     assert "start" in result, "Response should have 'start' field"
     assert "parks" in result, "Response should have 'parks' field"
 
-    # Verify types match TypeScript implementation
     assert isinstance(result["total"], int), "total should be an integer"
     assert isinstance(result["limit"], int), "limit should be an integer"
     assert isinstance(result["start"], int), "start should be an integer"
@@ -224,14 +212,10 @@ def test_find_parks_response_structure(mock_api_client, state_code, limit, q):
     )
 )
 def test_find_parks_invalid_state_error_handling(mock_api_client, state_code):
-    """
-    Property: For any invalid state code, the error response should match
-    the TypeScript implementation's error structure.
-    """
+ 
     request = FindParksRequest(stateCode=state_code)
     result = find_parks(request)
 
-    # Verify error response structure matches TypeScript implementation
     assert isinstance(result, dict), "Error response should be a dictionary"
     assert "error" in result, "Error response should have 'error' field"
     assert (
@@ -248,17 +232,12 @@ def test_find_parks_invalid_state_error_handling(mock_api_client, state_code):
 @settings(max_examples=20, suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(park_code=st.text(min_size=1, max_size=10))
 def test_get_park_details_response_structure(mock_api_client, park_code):
-    """
-    Property: For any valid park code, the response structure should match
-    the TypeScript implementation's structure.
-    """
+ 
     request = GetParkDetailsRequest(parkCode=park_code)
     result = get_park_details(request)
 
-    # Verify response structure matches TypeScript implementation
     assert isinstance(result, dict), "Response should be a dictionary"
 
-    # Verify required fields from TypeScript formatParkDetails
     required_fields = [
         "name",
         "code",
@@ -289,10 +268,7 @@ def test_get_park_details_response_structure(mock_api_client, park_code):
 @settings(max_examples=15, suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(park_code=st.text(min_size=1, max_size=10))
 def test_get_park_details_not_found_error(mock_api_client, park_code):
-    """
-    Property: For any park code that doesn't exist, the error response should match
-    the TypeScript implementation's error structure.
-    """
+   
     # Configure mock to return empty data
     mock_api_client.get_park_by_code.return_value = {
         "total": "0",
@@ -304,7 +280,6 @@ def test_get_park_details_not_found_error(mock_api_client, park_code):
     request = GetParkDetailsRequest(parkCode=park_code)
     result = get_park_details(request)
 
-    # Verify error response structure matches TypeScript implementation
     assert isinstance(result, dict), "Error response should be a dictionary"
     assert "error" in result, "Error response should have 'error' field"
     assert "message" in result, "Error response should have 'message' field"
@@ -317,10 +292,7 @@ def test_get_park_details_not_found_error(mock_api_client, park_code):
     limit=st.one_of(st.none(), st.integers(min_value=1, max_value=50)),
 )
 def test_handler_response_serialization(mock_api_client, limit):
-    """
-    Property: For any handler response, it should be JSON serializable
-    (matching TypeScript's JSON.stringify behavior).
-    """
+ 
     from src.handlers.get_alerts import get_alerts
     from src.models.requests import GetAlertsRequest
 
@@ -345,10 +317,7 @@ def test_handler_response_serialization(mock_api_client, limit):
     start=st.integers(min_value=0, max_value=100),
 )
 def test_pagination_parameters_consistency(mock_api_client, limit, start):
-    """
-    Property: For any valid pagination parameters, the response should include
-    the same pagination fields as the TypeScript implementation.
-    """
+   
     from src.handlers.get_visitor_centers import get_visitor_centers
     from src.models.requests import GetVisitorCentersRequest
 
@@ -363,12 +332,10 @@ def test_pagination_parameters_consistency(mock_api_client, limit, start):
     request = GetVisitorCentersRequest(limit=limit, start=start)
     result = get_visitor_centers(request)
 
-    # Verify pagination fields match TypeScript implementation
     assert "total" in result, "Response should have 'total' field"
     assert "limit" in result, "Response should have 'limit' field"
     assert "start" in result, "Response should have 'start' field"
 
-    # Verify types are integers (TypeScript uses parseInt)
     assert isinstance(result["total"], int), "total should be an integer"
     assert isinstance(result["limit"], int), "limit should be an integer"
     assert isinstance(result["start"], int), "start should be an integer"
@@ -379,10 +346,7 @@ def test_pagination_parameters_consistency(mock_api_client, limit, start):
 
 
 def test_all_handlers_have_consistent_error_handling(mock_api_client):
-    """
-    Property: For any API error, all handlers should handle errors in the same manner
-    as the TypeScript implementation.
-    """
+ 
     from src.handlers.get_campgrounds import get_campgrounds
     from src.handlers.get_events import get_events
     from src.models.requests import GetCampgroundsRequest, GetEventsRequest
@@ -409,7 +373,6 @@ def test_all_handlers_have_consistent_error_handling(mock_api_client):
             message="API Error", status_code=500, error_type="api_error"
         )
 
-        # Verify handler raises NPSAPIError (matching TypeScript's error throwing)
         with pytest.raises(NPSAPIError) as exc_info:
             handler(request)
 

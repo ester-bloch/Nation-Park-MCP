@@ -55,8 +55,6 @@ dmypy.json
 .DS_Store
 Thumbs.db
 
-# Exclude existing TypeScript project
-mcp-server-nationalparks/
 # Environment variables (Crucial for API keys)
 .env
 .env.local

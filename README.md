@@ -232,4 +232,3 @@ tests/
 
 - Built with [FastMCP](https://github.com/jlowin/fastmcp)
 - Data provided by the [National Park Service API](https://www.nps.gov/subjects/developer/)
-- Inspired by the original TypeScript implementation
