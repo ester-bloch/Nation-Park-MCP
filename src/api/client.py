@@ -1,8 +1,7 @@
 """NPS API client using HTTPX."""
 
 import time
-from typing import Any, Dict, Generic, Optional, Type, TypeVar
-from urllib.parse import urljoin
+from typing import Any, Dict, Optional, TypeVar
 
 import httpx
 from pydantic import BaseModel
@@ -30,6 +29,15 @@ class NPSAPIError(Exception):
         error_type: str = "api_error",
         details: Optional[Dict[str, Any]] = None,
     ):
+        """
+        Initialize the NPSAPIError exception.
+
+        Args:
+            message: A human-readable error message.
+            status_code: The HTTP status code returned by the API.
+            error_type: The category of the error.
+            details: Additional dictionary containing error specifics.
+        """
         self.message = message
         self.status_code = status_code
         self.error_type = error_type
@@ -138,7 +146,6 @@ class NPSAPIClient:
             self.client.close()
         logger.debug("api_client_closed", message="Closed NPS API client")
 
-
     def _handle_response(self, response: httpx.Response) -> Dict[str, Any]:
         """
         Handle HTTP response and extract JSON data.
@@ -217,7 +224,7 @@ class NPSAPIClient:
         if self.rate_limiter:
             self.rate_limiter.acquire(tokens=1, block=True)
 
-
+        url = self.base_url + endpoint
         # Log the outgoing request
         log_api_request(logger, "GET", url, params)
 
@@ -235,7 +242,7 @@ class NPSAPIClient:
             log_api_response(logger, "GET", url, status_code, duration_ms)
 
             return self._handle_response(response)
-        except httpx.TimeoutException as e:
+        except httpx.TimeoutException:
             duration_ms = (time.time() - start_time) * 1000
             error_msg = "Request timed out"
 

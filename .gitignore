@@ -36,13 +36,15 @@ venv.bak/
 *.swp
 *.swo
 *~
+.kiro/
 
 # Testing
 .coverage
 .pytest_cache/
 .tox/
 htmlcov/
-
+docks
+scripts
 # MyPy
 .mypy_cache/
 .dmypy.json
