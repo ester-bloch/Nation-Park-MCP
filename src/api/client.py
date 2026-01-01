@@ -138,20 +138,6 @@ class NPSAPIClient:
             self.client.close()
         logger.debug("api_client_closed", message="Closed NPS API client")
 
-    def _build_url(self, endpoint: str) -> str:
-        """
-        Build full URL for an endpoint.
-
-        Args:
-            endpoint: API endpoint path
-
-        Returns:
-            Full URL
-        """
-        # Ensure endpoint starts with /
-        if not endpoint.startswith("/"):
-            endpoint = f"/{endpoint}"
-        return urljoin(self.base_url, endpoint)
 
     def _handle_response(self, response: httpx.Response) -> Dict[str, Any]:
         """
@@ -231,7 +217,6 @@ class NPSAPIClient:
         if self.rate_limiter:
             self.rate_limiter.acquire(tokens=1, block=True)
 
-        url = self._build_url(endpoint)
 
         # Log the outgoing request
         log_api_request(logger, "GET", url, params)
@@ -242,7 +227,7 @@ class NPSAPIClient:
         error_msg = None
 
         try:
-            response = self.client.get(url, params=params)
+            response = self.client.get(endpoint.lstrip("/"), params=params)
             status_code = response.status_code
             duration_ms = (time.time() - start_time) * 1000
 
