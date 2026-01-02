@@ -9,19 +9,29 @@ from src.api.client import NPSAPIError
 from src.config import settings
 from src.handlers import (
     find_parks,
+    geocode_location,
+    get_air_quality,
     get_alerts,
     get_campgrounds,
     get_events,
+    get_park_context,
     get_park_details,
+    get_weather,
     get_visitor_centers,
+    reverse_geocode,
 )
 from src.models.requests import (
+    GeocodeLocationRequest,
     FindParksRequest,
     GetAlertsRequest,
+    GetAirQualityRequest,
     GetCampgroundsRequest,
     GetEventsRequest,
     GetParkDetailsRequest,
+    GetParkContextRequest,
     GetVisitorCentersRequest,
+    GetWeatherRequest,
+    ReverseGeocodeRequest,
 )
 from src.utils.error_handler import (
     handle_api_error,
@@ -423,6 +433,218 @@ class NationalParksServer:
                 # Handle unexpected errors with structured response
                 log_response(logger, "getEvents", success=False, error="internal_error")
                 return handle_generic_error(e, context={"tool": "getEvents"})
+
+        # Register geocode_location tool
+        @self.mcp.tool()
+        def geocodeLocation(q: str, limit: int | None = None) -> Dict[str, Any]:
+            """
+            Geocode a location name or address into coordinates.
+
+            Args:
+                q: Location query to geocode (address, place name, or landmark)
+                limit: Maximum number of results to return (default: 5, max: 10)
+
+            Returns:
+                Dictionary containing geocoding results
+            """
+            log_request(logger, "geocodeLocation", {"q": q, "limit": limit})
+
+            try:
+                request = GeocodeLocationRequest(q=q, limit=limit)
+                result = geocode_location(request)
+                log_response(
+                    logger,
+                    "geocodeLocation",
+                    success=True,
+                    response_size=result.get("count") if isinstance(result, dict) else None,
+                )
+                return result
+            except PydanticValidationError as e:
+                log_response(
+                    logger, "geocodeLocation", success=False, error="validation_error"
+                )
+                return handle_validation_error(e)
+            except NPSAPIError as e:
+                log_response(logger, "geocodeLocation", success=False, error=e.error_type)
+                return handle_api_error(e)
+            except Exception as e:
+                log_response(
+                    logger, "geocodeLocation", success=False, error="internal_error"
+                )
+                return handle_generic_error(e, context={"tool": "geocodeLocation"})
+
+        # Register reverse_geocode tool
+        @self.mcp.tool()
+        def reverseGeocode(latitude: float, longitude: float) -> Dict[str, Any]:
+            """
+            Reverse geocode coordinates into a structured address.
+
+            Args:
+                latitude: Latitude of the location
+                longitude: Longitude of the location
+
+            Returns:
+                Dictionary containing reverse geocode results
+            """
+            log_request(
+                logger,
+                "reverseGeocode",
+                {"latitude": latitude, "longitude": longitude},
+            )
+
+            try:
+                request = ReverseGeocodeRequest(
+                    latitude=latitude, longitude=longitude
+                )
+                result = reverse_geocode(request)
+                log_response(logger, "reverseGeocode", success=True)
+                return result
+            except PydanticValidationError as e:
+                log_response(
+                    logger, "reverseGeocode", success=False, error="validation_error"
+                )
+                return handle_validation_error(e)
+            except NPSAPIError as e:
+                log_response(logger, "reverseGeocode", success=False, error=e.error_type)
+                return handle_api_error(e)
+            except Exception as e:
+                log_response(
+                    logger, "reverseGeocode", success=False, error="internal_error"
+                )
+                return handle_generic_error(e, context={"tool": "reverseGeocode"})
+
+        # Register get_weather tool
+        @self.mcp.tool()
+        def getWeather(
+            latitude: float,
+            longitude: float,
+            units: str | None = None,
+            language: str | None = None,
+        ) -> Dict[str, Any]:
+            """
+            Get current weather for a given location.
+
+            Args:
+                latitude: Latitude for the weather lookup
+                longitude: Longitude for the weather lookup
+                units: Units system ("metric" or "imperial")
+                language: Language code for localized conditions (OpenWeather only)
+
+            Returns:
+                Dictionary containing weather data
+            """
+            log_request(
+                logger,
+                "getWeather",
+                {
+                    "latitude": latitude,
+                    "longitude": longitude,
+                    "units": units,
+                    "language": language,
+                },
+            )
+
+            try:
+                request = GetWeatherRequest(
+                    latitude=latitude,
+                    longitude=longitude,
+                    units=units,
+                    language=language,
+                )
+                result = get_weather(request)
+                log_response(logger, "getWeather", success=True)
+                return result
+            except PydanticValidationError as e:
+                log_response(logger, "getWeather", success=False, error="validation_error")
+                return handle_validation_error(e)
+            except NPSAPIError as e:
+                log_response(logger, "getWeather", success=False, error=e.error_type)
+                return handle_api_error(e)
+            except Exception as e:
+                log_response(logger, "getWeather", success=False, error="internal_error")
+                return handle_generic_error(e, context={"tool": "getWeather"})
+
+        # Register get_air_quality tool
+        @self.mcp.tool()
+        def getAirQuality(latitude: float, longitude: float) -> Dict[str, Any]:
+            """
+            Get air quality data for a given location.
+
+            Args:
+                latitude: Latitude for the air quality lookup
+                longitude: Longitude for the air quality lookup
+
+            Returns:
+                Dictionary containing air quality data
+            """
+            log_request(
+                logger,
+                "getAirQuality",
+                {"latitude": latitude, "longitude": longitude},
+            )
+
+            try:
+                request = GetAirQualityRequest(
+                    latitude=latitude,
+                    longitude=longitude,
+                )
+                result = get_air_quality(request)
+                log_response(logger, "getAirQuality", success=True)
+                return result
+            except PydanticValidationError as e:
+                log_response(
+                    logger, "getAirQuality", success=False, error="validation_error"
+                )
+                return handle_validation_error(e)
+            except NPSAPIError as e:
+                log_response(logger, "getAirQuality", success=False, error=e.error_type)
+                return handle_api_error(e)
+            except Exception as e:
+                log_response(
+                    logger, "getAirQuality", success=False, error="internal_error"
+                )
+                return handle_generic_error(e, context={"tool": "getAirQuality"})
+
+        # Register get_park_context tool
+        @self.mcp.tool()
+        def getParkContext(
+            parkCode: str,
+            units: str | None = None,
+        ) -> Dict[str, Any]:
+            """
+            Get combined park, weather, and air quality context.
+
+            Args:
+                parkCode: Park code to build the context
+                units: Units system for weather ("metric" or "imperial")
+
+            Returns:
+                Dictionary containing combined park context
+            """
+            log_request(
+                logger,
+                "getParkContext",
+                {"parkCode": parkCode, "units": units},
+            )
+
+            try:
+                request = GetParkContextRequest(parkCode=parkCode, units=units)
+                result = get_park_context(request)
+                log_response(logger, "getParkContext", success=True)
+                return result
+            except PydanticValidationError as e:
+                log_response(
+                    logger, "getParkContext", success=False, error="validation_error"
+                )
+                return handle_validation_error(e)
+            except NPSAPIError as e:
+                log_response(logger, "getParkContext", success=False, error=e.error_type)
+                return handle_api_error(e)
+            except Exception as e:
+                log_response(
+                    logger, "getParkContext", success=False, error="internal_error"
+                )
+                return handle_generic_error(e, context={"tool": "getParkContext"})
 
     def run(self):
         """Run the server with stdio transport."""

@@ -7,6 +7,7 @@ A Python implementation of the Model Context Protocol (MCP) server for accessing
 - **FastMCP Integration**: Built using the official Python MCP SDK
 - **Type Safety**: Full Pydantic validation and type hints
 - **Modern HTTP Client**: HTTPX for reliable API communication
+- **Context Enrichment**: Geocoding, live weather, and air quality integrations
 - **Comprehensive Testing**: Unit tests and property-based testing
 - **Development Tools**: Black, flake8, mypy, and pre-commit hooks
 
@@ -58,6 +59,13 @@ pip install -e .
 3. Edit `.env` and add your API key:
    ```
    NPS_API_KEY=your_nps_api_key_here
+   ```
+
+4. Optional: configure geocoding, weather, and air quality providers:
+   ```
+   NOMINATIM_USER_AGENT=NationalParksMCP/1.0 (contact@example.com)
+   OPENWEATHER_API_KEY=your_openweather_api_key_here
+   AIRVISUAL_API_KEY=your_airvisual_api_key_here
    ```
 
 ## Usage
@@ -121,6 +129,11 @@ The server provides six tools for accessing National Parks data:
 - `getVisitorCenters` - Find visitor centers and operating hours
 - `getCampgrounds` - Discover campgrounds and amenities
 - `getEvents` - Find upcoming park events and programs
+- `geocodeLocation` - Convert place names or addresses into coordinates
+- `reverseGeocode` - Convert coordinates into a structured address
+- `getWeather` - Current weather with OpenWeather and Open-Meteo fallback
+- `getAirQuality` - Air quality observations via AirVisual
+- `getParkContext` - Combined NPS + weather + air quality context
 
 ## Development
 
@@ -198,11 +211,19 @@ src/
 │   ├── get_alerts.py
 │   ├── get_visitor_centers.py
 │   ├── get_campgrounds.py
-│   └── get_events.py
-├── api/                   # NPS API client
+│   ├── get_events.py
+│   ├── geocode_location.py
+│   ├── reverse_geocode.py
+│   ├── get_weather.py
+│   ├── get_air_quality.py
+│   └── get_park_context.py
+├── api/                   # API clients
 │   ├── __init__.py
 │   ├── client.py          # HTTPX client
-│   ├── auth.py            # Authentication
+│   ├── external_client.py # Shared HTTP client
+│   ├── geocoding.py        # Nominatim client
+│   ├── weather.py          # OpenWeather/Open-Meteo client
+│   ├── air_quality.py      # AirVisual client
 │   └── rate_limit.py      # Rate limiting
 └── utils/                 # Utility functions
     ├── __init__.py

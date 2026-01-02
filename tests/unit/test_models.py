@@ -6,11 +6,16 @@ from pydantic import ValidationError
 from src.models.errors import ErrorResponse, ValidationErrorResponse
 from src.models.requests import (
     FindParksRequest,
+    GeocodeLocationRequest,
     GetAlertsRequest,
+    GetAirQualityRequest,
     GetCampgroundsRequest,
     GetEventsRequest,
     GetParkDetailsRequest,
+    GetParkContextRequest,
     GetVisitorCentersRequest,
+    GetWeatherRequest,
+    ReverseGeocodeRequest,
 )
 from src.models.responses import (
     AlertData,
@@ -96,6 +101,41 @@ class TestRequestModels:
         assert request.limit == 10
         assert request.date_start == "2024-01-01"
         assert request.date_end == "2024-12-31"
+
+    def test_geocode_request_valid(self):
+        """Test GeocodeLocationRequest with valid data."""
+        request = GeocodeLocationRequest(q="Yosemite", limit=3)
+        assert request.query == "Yosemite"
+        assert request.limit == 3
+
+    def test_reverse_geocode_request_valid(self):
+        """Test ReverseGeocodeRequest with valid data."""
+        request = ReverseGeocodeRequest(latitude=37.8651, longitude=-119.5383)
+        assert request.latitude == 37.8651
+        assert request.longitude == -119.5383
+
+    def test_get_weather_request_valid(self):
+        """Test GetWeatherRequest with valid data."""
+        request = GetWeatherRequest(
+            latitude=37.8651,
+            longitude=-119.5383,
+            units="imperial",
+            language="en",
+        )
+        assert request.units == "imperial"
+        assert request.language == "en"
+
+    def test_get_air_quality_request_valid(self):
+        """Test GetAirQualityRequest with valid data."""
+        request = GetAirQualityRequest(latitude=37.8651, longitude=-119.5383)
+        assert request.latitude == 37.8651
+        assert request.longitude == -119.5383
+
+    def test_get_park_context_request_valid(self):
+        """Test GetParkContextRequest with valid data."""
+        request = GetParkContextRequest(parkCode="yose", units="metric")
+        assert request.park_code == "yose"
+        assert request.units == "metric"
 
 
 class TestResponseModels:
