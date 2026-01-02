@@ -72,16 +72,55 @@ poetry run python-mcp-nationalparks
 python-mcp-nationalparks
 ```
 
+### Quick Demo (2 minutes)
+
+1) Install dependencies
+
+```bash
+# Option A: Poetry
+poetry install
+
+# Option B: pip (editable)
+pip install -e .
+```
+
+2) (Recommended) Configure your NPS API key
+
+```bash
+cp .env.example .env
+# then edit .env and set NPS_API_KEY=...
+```
+
+3) Run the server (stdio)
+
+```bash
+# If installed via Poetry
+poetry run python-mcp-nationalparks
+
+# Or directly (works from repo root)
+python -m src.main
+```
+
+4) Run the fallback demo client (spawns the server and calls a tool)
+
+```bash
+python scripts/demo.py
+```
+
+### Claude Desktop configuration
+
+Use `docs/claude_desktop_config.json` as a template. Replace `YOUR_NPS_API_KEY_HERE` with your real key and add it to your Claude Desktop configuration.
+
 ### Available Tools
 
 The server provides six tools for accessing National Parks data:
 
-- `find_parks` - Search parks by state, activity, or keyword
-- `get_park_details` - Get detailed information about a specific park
-- `get_alerts` - Check current park alerts and closures
-- `get_visitor_centers` - Find visitor centers and operating hours
-- `get_campgrounds` - Discover campgrounds and amenities
-- `get_events` - Find upcoming park events and programs
+- `findParks` - Search parks by state, activity, or keyword
+- `getParkDetails` - Get detailed information about a specific park
+- `getAlerts` - Check current park alerts and closures
+- `getVisitorCenters` - Find visitor centers and operating hours
+- `getCampgrounds` - Discover campgrounds and amenities
+- `getEvents` - Find upcoming park events and programs
 
 ## Development
 
@@ -190,4 +229,3 @@ tests/
 
 - Built with [FastMCP](https://github.com/jlowin/fastmcp)
 - Data provided by the [National Park Service API](https://www.nps.gov/subjects/developer/)
-- Inspired by the original TypeScript implementation

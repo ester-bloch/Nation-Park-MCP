@@ -16,9 +16,6 @@ from src.api.client import NPSAPIClient, NPSAPIError
 from src.api.rate_limit import RateLimiter
 from src.config import settings as app_settings
 
-# Property 5: NPS API Integration Consistency
-# For any NPS API integration pattern used in the TypeScript version,
-# the Python server should maintain the same integration behavior and rate limiting
 
 
 @settings(max_examples=50)
@@ -34,10 +31,7 @@ from src.config import settings as app_settings
     ),
 )
 def test_api_client_supports_all_nps_endpoints(endpoint, params):
-    """
-    Property: For any NPS API endpoint, the client should support making requests
-    with proper parameter handling, matching TypeScript implementation patterns.
-    """
+  
     with patch("httpx.Client") as mock_client_class:
         mock_client_instance = Mock()
         mock_response = Mock()
@@ -88,10 +82,7 @@ def test_api_client_supports_all_nps_endpoints(endpoint, params):
     requests_count=st.integers(min_value=1, max_value=10),
 )
 def test_api_client_maintains_authentication_across_requests(api_key, requests_count):
-    """
-    Property: For any API key, the client should maintain authentication headers
-    across multiple requests, matching TypeScript's axios interceptor pattern.
-    """
+ 
     with patch("httpx.Client") as mock_client_class:
         mock_client_instance = Mock()
         mock_response = Mock()
@@ -129,10 +120,7 @@ def test_api_client_maintains_authentication_across_requests(api_key, requests_c
 def test_api_client_rate_limiting_respects_constraints(
     requests_per_hour, request_burst_size
 ):
-    """
-    Property: For any rate limit configuration, the client should respect the
-    configured requests per hour limit, matching TypeScript's rate limiting pattern.
-    """
+ 
     # Create a rate limiter with the given configuration
     rate_limiter = RateLimiter(requests_per_hour=requests_per_hour)
 
@@ -167,10 +155,7 @@ def test_api_client_rate_limiting_respects_constraints(
     ),
 )
 def test_api_client_handles_all_http_error_codes(status_codes):
-    """
-    Property: For any HTTP error status code, the client should handle it gracefully
-    and return structured error responses, matching TypeScript's error handling pattern.
-    """
+   
     with patch("httpx.Client") as mock_client_class:
         mock_client_instance = Mock()
 
@@ -220,10 +205,7 @@ def test_api_client_handles_all_http_error_codes(status_codes):
     query_value=st.text(min_size=1, max_size=30),
 )
 def test_api_client_query_parameter_handling(endpoint, query_param, query_value):
-    """
-    Property: For any query parameter, the client should properly encode and pass it
-    to the NPS API, matching TypeScript's axios parameter handling.
-    """
+ 
     with patch("httpx.Client") as mock_client_class:
         mock_client_instance = Mock()
         mock_response = Mock()
@@ -262,10 +244,7 @@ def test_api_client_query_parameter_handling(endpoint, query_param, query_value)
     timeout_seconds=st.floats(min_value=5.0, max_value=60.0),
 )
 def test_api_client_timeout_configuration(timeout_seconds):
-    """
-    Property: For any timeout configuration, the client should apply it to all requests,
-    matching TypeScript's axios timeout configuration pattern.
-    """
+
     with patch("httpx.Client") as mock_client_class:
         mock_client_instance = Mock()
         mock_client_class.return_value = mock_client_instance
@@ -297,10 +276,7 @@ def test_api_client_timeout_configuration(timeout_seconds):
     ),
 )
 def test_api_client_response_parsing_consistency(response_data):
-    """
-    Property: For any valid JSON response from the NPS API, the client should
-    parse it consistently, matching TypeScript's JSON parsing behavior.
-    """
+
     with patch("httpx.Client") as mock_client_class:
         mock_client_instance = Mock()
         mock_response = Mock()
@@ -331,10 +307,7 @@ def test_api_client_response_parsing_consistency(response_data):
     ),
 )
 def test_api_client_base_url_configuration(base_url, endpoint):
-    """
-    Property: For any base URL configuration, the client should use it for all requests,
-    matching TypeScript's axios baseURL pattern.
-    """
+
     with patch("httpx.Client") as mock_client_class:
         mock_client_instance = Mock()
         mock_response = Mock()
@@ -369,10 +342,7 @@ def test_api_client_base_url_configuration(base_url, endpoint):
     retry_delay=st.floats(min_value=0.1, max_value=5.0),
 )
 def test_api_client_retry_configuration(max_retries, retry_delay):
-    """
-    Property: For any retry configuration, the client should apply exponential backoff,
-    matching TypeScript's axios-retry pattern.
-    """
+
     with patch("httpx.Client") as mock_client_class, patch("time.sleep") as mock_sleep:
         mock_client_instance = Mock()
         mock_client_class.return_value = mock_client_instance
@@ -397,11 +367,7 @@ def test_api_client_retry_configuration(max_retries, retry_delay):
     activity_id=st.text(min_size=1, max_size=20),
 )
 def test_api_client_convenience_methods_consistency(park_code, state_code, activity_id):
-    """
-    Property: For any convenience method (get_parks, get_park_by_code, etc.),
-    the client should properly delegate to the base get() method with correct parameters,
-    matching TypeScript's handler method patterns.
-    """
+
     with patch("httpx.Client") as mock_client_class:
         mock_client_instance = Mock()
         mock_response = Mock()
@@ -451,10 +417,7 @@ def test_api_client_convenience_methods_consistency(park_code, state_code, activ
     status_code=st.one_of(st.none(), st.integers(min_value=400, max_value=599)),
 )
 def test_api_error_response_structure_consistency(error_type, status_code):
-    """
-    Property: For any error type, the NPSAPIError should provide a consistent
-    error response structure, matching TypeScript's error response format.
-    """
+  
     error = NPSAPIError(
         message="Test error",
         status_code=status_code,

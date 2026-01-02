@@ -36,13 +36,15 @@ venv.bak/
 *.swp
 *.swo
 *~
-
+.kiro/
+.hypothesis
 # Testing
 .coverage
 .pytest_cache/
 .tox/
 htmlcov/
-
+docks
+scripts
 # MyPy
 .mypy_cache/
 .dmypy.json
@@ -55,5 +57,18 @@ dmypy.json
 .DS_Store
 Thumbs.db
 
-# Exclude existing TypeScript project
-mcp-server-nationalparks/
+# Environment variables (Crucial for API keys)
+.env
+.env.local
+.env.shared
+
+# Logging
+*.log
+logs/
+
+# MCP Specific
+.mcp/
+mcp_usage.json
+
+# Local development
+config.local.yaml
