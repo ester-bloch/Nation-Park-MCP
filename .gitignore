@@ -37,7 +37,7 @@ venv.bak/
 *.swo
 *~
 .kiro/
-
+.hypothesis
 # Testing
 .coverage
 .pytest_cache/
