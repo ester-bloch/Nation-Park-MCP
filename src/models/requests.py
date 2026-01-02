@@ -165,3 +165,108 @@ class GetEventsRequest(BaseModel):
         None,
         description="Search term to filter events by title or description",
     )
+
+
+class GeocodeLocationRequest(BaseModel):
+    """Request model for geocoding a location name or address."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    query: str = Field(
+        ...,
+        alias="q",
+        description="Location query to geocode (address, place name, or landmark)",
+        min_length=1,
+    )
+    limit: Optional[int] = Field(
+        5,
+        description="Maximum number of results to return (default: 5, max: 10)",
+        ge=1,
+        le=10,
+    )
+
+
+class ReverseGeocodeRequest(BaseModel):
+    """Request model for reverse geocoding coordinates."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    latitude: float = Field(
+        ...,
+        ge=-90,
+        le=90,
+        description="Latitude of the location to reverse geocode",
+    )
+    longitude: float = Field(
+        ...,
+        ge=-180,
+        le=180,
+        description="Longitude of the location to reverse geocode",
+    )
+
+
+class GetWeatherRequest(BaseModel):
+    """Request model for weather lookup."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    latitude: float = Field(
+        ...,
+        ge=-90,
+        le=90,
+        description="Latitude for the weather lookup",
+    )
+    longitude: float = Field(
+        ...,
+        ge=-180,
+        le=180,
+        description="Longitude for the weather lookup",
+    )
+    units: Optional[str] = Field(
+        "metric",
+        description='Units system ("metric" or "imperial")',
+        pattern="^(metric|imperial)$",
+    )
+    language: Optional[str] = Field(
+        None,
+        description="Language code for localized conditions (OpenWeather only)",
+        min_length=2,
+        max_length=5,
+    )
+
+
+class GetAirQualityRequest(BaseModel):
+    """Request model for air quality lookup."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    latitude: float = Field(
+        ...,
+        ge=-90,
+        le=90,
+        description="Latitude for the air quality lookup",
+    )
+    longitude: float = Field(
+        ...,
+        ge=-180,
+        le=180,
+        description="Longitude for the air quality lookup",
+    )
+
+
+class GetParkContextRequest(BaseModel):
+    """Request model for combined park context."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    park_code: str = Field(
+        ...,
+        alias="parkCode",
+        description="Park code to build the full context",
+        min_length=1,
+    )
+    units: Optional[str] = Field(
+        "metric",
+        description='Units system for weather ("metric" or "imperial")',
+        pattern="^(metric|imperial)$",
+    )
