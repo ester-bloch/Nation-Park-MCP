@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     nps_api_key: Optional[str] = None
     nps_api_base_url: str = "https://developer.nps.gov/api/v1"
     airvisual_api_key: Optional[str] = None
-    airvisual_api_base_url: str = "https://api.airvisual.com/v2"  # blocked by netfree for this point of time, will get open soon
+    airvisual_api_base_url: str = "https://api.airvisual.com/v2"
     openweather_api_key: Optional[str] = None
     openweather_api_base_url: str = "https://api.openweathermap.org/data/2.5"
     open_meteo_api_base_url: str = "https://api.open-meteo.com/v1"

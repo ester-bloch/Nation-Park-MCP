@@ -2,7 +2,7 @@
 name = "python-mcp-nationalparks"
 version = "0.1.0"
 description = "Python MCP server for National Parks data using FastMCP"
-authors = ["Your Name <your.email@example.com>"]
+authors = ["Ester Bloch <esterbloch846@gmail.com>"]
 readme = "README.md"
 packages = [{include = "src"}]
 
