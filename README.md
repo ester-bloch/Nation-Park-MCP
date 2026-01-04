@@ -49,32 +49,32 @@ If the key is not configured, air-quality requests return a structured configura
 - #### `findParks`
 Search parks by state, keywords, and activities.
 
-#### `getParkDetails`
+- #### `getParkDetails`
 Retrieve a full park profile.
 
-#### `getVisitorCenters`
+- #### `getVisitorCenters`
 Retrieve visitor center data for a park.
 
-#### `getCampgrounds`
+- #### `getCampgrounds`
 Retrieve campground data for a park.
 
-#### `getEvents`
+- #### `getEvents`
 Retrieve park-related events.
 
 ### Safety & Context Tools
 
-#### `getAlerts`
+- #### `getAlerts`
 Retrieve active alerts and warnings.
 
-#### `getParkContext`
+- #### `getParkContext`
 Return a condensed context object combining park metadata, alerts, and safety information.
 
 ### Environmental Tools
 
-#### `getWeather`
+- #### `getWeather`
 Retrieve live weather conditions.
 
-#### `getAirQuality`
+- #### `getAirQuality`
 Retrieve air-quality indices and pollutant data.
 
 All tools:
