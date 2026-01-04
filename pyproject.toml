@@ -2,7 +2,7 @@
 name = "python-mcp-nationalparks"
 version = "0.1.0"
 description = "Python MCP server for National Parks data using FastMCP"
-authors = ["Your Name <your.email@example.com>"]
+authors = ["Ester Bloch <esterbloch846@gmail.com>"]
 readme = "README.md"
 packages = [{include = "src"}]
 
@@ -20,6 +20,7 @@ pydantic-settings = "2.6.1"
 pytest = "^7.0.0"
 pytest-cov = "^4.0.0"
 pytest-mock = "^3.0.0"
+pytest-asyncio = "^0.23.0"
 hypothesis = "^6.0.0"
 black = "^23.0.0"
 flake8 = "^6.0.0"
@@ -75,12 +76,16 @@ strict_equality = true
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = "-ra -q --strict-markers"
+asyncio_mode = "auto"
 testpaths = [
     "tests",
 ]
 python_files = [
     "test_*.py",
     "*_test.py",
+]
+markers = [
+    "asyncio: mark a test as requiring asyncio",
 ]
 
 [tool.coverage.run]
