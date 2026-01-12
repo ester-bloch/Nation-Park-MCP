@@ -2,346 +2,345 @@
 
 ## Problem Description
 
-The MCP National Parks server has validation errors in two endpoints that need to be fixed:
+The National Parks MCP server has critical validation errors in two endpoints that are preventing proper functionality:
 
-### 1. getCampgrounds Endpoint - Boolean Parsing Issues
+### 1. getCampgrounds Endpoint - Boolean Parsing Errors
+**Error Type:** `bool_parsing` validation failures
+**Affected Fields:**
+- `amenities.trashRecyclingCollection`
+- `amenities.staffOrVolunteerHostOnsite`
+- `amenities.foodStorageLockers`
+- `amenities.cellPhoneReception`
 
-**Error Details:**
-```
-validation_error: Input validation failed
-- amenities.trashRecyclingCollection: Input should be a valid boolean, unable to interpret input
-- amenities.staffOrVolunteerHostOnsite: Input should be a valid boolean, unable to interpret input
-- amenities.foodStorageLockers: Input should be a valid boolean, unable to interpret input
-- amenities.cellPhoneReception: Input should be a valid boolean, unable to interpret input
-```
-
-**Root Cause:** The National Park Service API returns boolean values as strings ("Yes"/"No" or "True"/"False") but the Pydantic models expect actual boolean types.
+**Root Cause:** The NPS API returns string values like "Yes", "No", "Unknown", or empty strings for boolean fields, but our Pydantic models expect strict boolean types.
 
 ### 2. getEvents Endpoint - Missing Required Fields
+**Error Type:** `missing` field validation failures
+**Affected Fields:**
+- `url` (required but missing from API response)
+- `times[].timeStart` (required but missing)
+- `times[].timeEnd` (required but missing)
+- `times[].sunriseTimeStart` (required but missing)
+- `times[].sunsetTimeEnd` (required but missing)
+- `dateStart` (required but missing)
+- `dateEnd` (required but missing)
+- `isRecurring` (required but missing)
+- `isAllDay` (required but missing)
+- `parkCode` (required but missing)
 
-**Error Details:**
-```
-validation_error: Input validation failed
-- Multiple missing required fields in event data structure including:
-  - url (required)
-  - times[].timeStart (required)
-  - times[].timeEnd (required)
-  - times[].sunriseTimeStart (required)
-  - times[].sunsetTimeEnd (required)
-  - dateStart (required)
-  - dateEnd (required)
-  - isRecurring (required)
-  - isAllDay (required)
-  - parkCode (required)
-```
-
-**Root Cause:** The Pydantic models have fields marked as required that are actually optional in the NPS API response, or the field mapping is incorrect.
-
-## Solution Strategy
-
-### For getCampgrounds (Boolean Parsing):
-
-1. **Identify the Data Transformation Issue:**
-   - The NPS API returns strings like "Yes"/"No" for boolean fields
-   - Pydantic models expect actual boolean values
-   - Need to add data transformation before validation
-
-2. **Implementation Approach:**
-   - Add a preprocessing function to convert string booleans to actual booleans
-   - Handle various string formats: "Yes"/"No", "True"/"False", "1"/"0"
-   - Apply this transformation before Pydantic validation
-
-3. **Code Changes Needed:**
-   ```python
-   def normalize_boolean_fields(data: dict) -> dict:
-       """Convert string boolean values to actual booleans"""
-       boolean_mappings = {
-           "Yes": True, "No": False,
-           "True": True, "False": False,
-           "1": True, "0": False,
-           "true": True, "false": False,
-           "yes": True, "no": False
-       }
-
-       # Apply to amenities fields
-       if "amenities" in data:
-           for key, value in data["amenities"].items():
-               if isinstance(value, str) and value in boolean_mappings:
-                   data["amenities"][key] = boolean_mappings[value]
-
-       return data
-   ```
-
-### For getEvents (Missing Required Fields):
-
-1. **Review Pydantic Model Definitions:**
-   - Check which fields are marked as required vs optional
-   - Compare with actual NPS API response structure
-   - Make fields optional where NPS API doesn't guarantee them
-
-2. **Implementation Approach:**
-   - Change required fields to Optional[Type] where appropriate
-   - Add default values for missing fields
-   - Use Field(default=None) for optional fields
-
-3. **Code Changes Needed:**
-   ```python
-   from typing import Optional
-   from pydantic import Field
-
-   class EventTime(BaseModel):
-       timeStart: Optional[str] = Field(default=None)
-       timeEnd: Optional[str] = Field(default=None)
-       sunriseTimeStart: Optional[str] = Field(default=None)
-       sunsetTimeEnd: Optional[str] = Field(default=None)
-
-   class Event(BaseModel):
-       url: Optional[str] = Field(default="")
-       dateStart: Optional[str] = Field(default=None)
-       dateEnd: Optional[str] = Field(default=None)
-       isRecurring: Optional[bool] = Field(default=False)
-       isAllDay: Optional[bool] = Field(default=False)
-       parkCode: Optional[str] = Field(default=None)
-   ```
+**Root Cause:** Our Pydantic models define fields as required that are actually optional in the NPS API responses.
 
 ## Detailed Fix Instructions
 
-### Step 1: Locate the Relevant Files
+### Step 1: Fix getCampgrounds Boolean Parsing
 
-Find and examine these files in your codebase:
-- `src/handlers/get_campgrounds.py` (or similar)
-- `src/handlers/get_events.py` (or similar)
-- `src/models/` directory for Pydantic model definitions
-- Any shared utility functions for data processing
+**File to modify:** `src/models/campground.py` (or wherever campground models are defined)
 
-### Step 2: Fix getCampgrounds Boolean Issue
-
-1. **Add Boolean Normalization Function:**
-   ```python
-   def normalize_campground_data(campground_data: dict) -> dict:
-       """Normalize campground data from NPS API format to expected format"""
-
-       def str_to_bool(value):
-           if isinstance(value, str):
-               return value.lower() in ['yes', 'true', '1']
-           return bool(value) if value is not None else False
-
-       # Handle amenities boolean fields
-       if "amenities" in campground_data:
-           amenities = campground_data["amenities"]
-           boolean_fields = [
-               "trashRecyclingCollection",
-               "staffOrVolunteerHostOnsite",
-               "foodStorageLockers",
-               "cellPhoneReception"
-           ]
-
-           for field in boolean_fields:
-               if field in amenities:
-                   amenities[field] = str_to_bool(amenities[field])
-
-       return campground_data
-   ```
-
-2. **Apply Normalization in Handler:**
-   ```python
-   async def get_campgrounds(parkCode: str = None, limit: int = 10, start: int = 0, q: str = None):
-       # ... existing API call code ...
-
-       # Normalize data before validation
-       normalized_campgrounds = []
-       for campground in raw_campgrounds:
-           normalized_campground = normalize_campground_data(campground)
-           normalized_campgrounds.append(normalized_campground)
-
-       # Now validate with Pydantic models
-       validated_campgrounds = [CampgroundModel(**camp) for camp in normalized_campgrounds]
-   ```
-
-### Step 3: Fix getEvents Missing Fields Issue
-
-1. **Update Event Pydantic Models:**
-   ```python
-   from typing import Optional, List
-   from pydantic import BaseModel, Field
-
-   class EventTime(BaseModel):
-       timeStart: Optional[str] = Field(default=None)
-       timeEnd: Optional[str] = Field(default=None)
-       sunriseTimeStart: Optional[str] = Field(default=None)
-       sunsetTimeEnd: Optional[str] = Field(default=None)
-
-   class Event(BaseModel):
-       id: Optional[str] = Field(default=None)
-       title: Optional[str] = Field(default="")
-       description: Optional[str] = Field(default="")
-       url: Optional[str] = Field(default="")
-       times: Optional[List[EventTime]] = Field(default_factory=list)
-       dateStart: Optional[str] = Field(default=None)
-       dateEnd: Optional[str] = Field(default=None)
-       isRecurring: Optional[bool] = Field(default=False)
-       isAllDay: Optional[bool] = Field(default=False)
-       parkCode: Optional[str] = Field(default=None)
-   ```
-
-2. **Add Data Validation and Defaults:**
-   ```python
-   def normalize_event_data(event_data: dict) -> dict:
-       """Ensure event data has all required fields with defaults"""
-
-       defaults = {
-           "url": "",
-           "dateStart": None,
-           "dateEnd": None,
-           "isRecurring": False,
-           "isAllDay": False,
-           "parkCode": None,
-           "times": []
-       }
-
-       # Apply defaults for missing fields
-       for key, default_value in defaults.items():
-           if key not in event_data or event_data[key] is None:
-               event_data[key] = default_value
-
-       # Ensure times array has proper structure
-       if "times" in event_data and event_data["times"]:
-           normalized_times = []
-           for time_entry in event_data["times"]:
-               time_defaults = {
-                   "timeStart": None,
-                   "timeEnd": None,
-                   "sunriseTimeStart": None,
-                   "sunsetTimeEnd": None
-               }
-
-               for time_key, time_default in time_defaults.items():
-                   if time_key not in time_entry:
-                       time_entry[time_key] = time_default
-
-               normalized_times.append(time_entry)
-
-           event_data["times"] = normalized_times
-
-       return event_data
-   ```
-
-### Step 4: Testing Strategy
-
-1. **Create Comprehensive Tests:**
-   ```python
-   import pytest
-   from your_mcp_server import get_campgrounds, get_events
-
-   @pytest.mark.asyncio
-   async def test_get_campgrounds_validation():
-       """Test that getCampgrounds handles boolean validation correctly"""
-       result = await get_campgrounds(parkCode="yose", limit=2)
-
-       assert "error" not in result
-       assert "campgrounds" in result
-
-       # Verify boolean fields are properly converted
-       for campground in result["campgrounds"]:
-           if "amenities" in campground:
-               amenities = campground["amenities"]
-               boolean_fields = ["trashRecyclingCollection", "staffOrVolunteerHostOnsite",
-                               "foodStorageLockers", "cellPhoneReception"]
-
-               for field in boolean_fields:
-                   if field in amenities:
-                       assert isinstance(amenities[field], bool), f"{field} should be boolean"
-
-   @pytest.mark.asyncio
-   async def test_get_events_validation():
-       """Test that getEvents handles missing fields correctly"""
-       result = await get_events(parkCode="yose", limit=2)
-
-       assert "error" not in result
-       assert "events" in result
-
-       # Verify all required fields are present
-       for event in result["events"]:
-           required_fields = ["url", "dateStart", "dateEnd", "isRecurring", "isAllDay", "parkCode"]
-           for field in required_fields:
-               assert field in event, f"Missing required field: {field}"
-   ```
-
-2. **Run Tests in Loop Until Success:**
-   ```bash
-   # Create a test runner script
-   #!/bin/bash
-
-   echo "Starting MCP validation fix testing loop..."
-
-   max_attempts=10
-   attempt=1
-
-   while [ $attempt -le $max_attempts ]; do
-       echo "Test attempt $attempt of $max_attempts"
-
-       # Run the specific tests
-       python -m pytest tests/test_mcp_validation.py -v
-
-       if [ $? -eq 0 ]; then
-           echo "✅ All tests passed! Validation issues fixed."
-           break
-       else
-           echo "❌ Tests failed. Analyzing errors and fixing..."
-
-           # Run tests with detailed output to see what's still failing
-           python -m pytest tests/test_mcp_validation.py -v --tb=short
-
-           echo "Please review the errors above and make necessary fixes."
-           echo "Press Enter to run tests again, or Ctrl+C to exit..."
-           read
-       fi
-
-       attempt=$((attempt + 1))
-   done
-
-   if [ $attempt -gt $max_attempts ]; then
-       echo "❌ Maximum attempts reached. Please review the code manually."
-       exit 1
-   fi
-   ```
-
-## Implementation Checklist
-
-- [ ] **Step 1:** Identify and locate the campgrounds and events handler files
-- [ ] **Step 2:** Add boolean normalization function for campgrounds
-- [ ] **Step 3:** Update Pydantic models for events to make fields optional
-- [ ] **Step 4:** Add data normalization for events
-- [ ] **Step 5:** Create comprehensive tests for both endpoints
-- [ ] **Step 6:** Run tests and fix any remaining issues
-- [ ] **Step 7:** Verify both endpoints work without validation errors
-- [ ] **Step 8:** Test with actual MCP client calls
-
-## Expected Outcome
-
-After implementing these fixes:
-
-1. **getCampgrounds** should successfully return campground data without boolean parsing errors
-2. **getEvents** should successfully return event data without missing field errors
-3. All existing functionality should remain intact
-4. The MCP server should pass all validation tests
-
-## Testing Commands
-
-Run these commands to verify the fixes:
+**Problem:** Boolean fields are receiving string values from NPS API
+**Solution:** Create a custom validator that converts string values to booleans
 
 ```python
-# Test getCampgrounds
-result = await get_campgrounds(parkCode="yose", limit=2)
-print("getCampgrounds result:", result)
+from pydantic import BaseModel, field_validator
+from typing import Optional, Union
 
-# Test getEvents
-result = await get_events(parkCode="yose", limit=2)
-print("getEvents result:", result)
+class CampgroundAmenities(BaseModel):
+    trashRecyclingCollection: Optional[bool] = None
+    staffOrVolunteerHostOnsite: Optional[bool] = None
+    foodStorageLockers: Optional[bool] = None
+    cellPhoneReception: Optional[bool] = None
+
+    @field_validator('trashRecyclingCollection', 'staffOrVolunteerHostOnsite', 'foodStorageLockers', 'cellPhoneReception', mode='before')
+    @classmethod
+    def parse_boolean_strings(cls, v: Union[str, bool, None]) -> Optional[bool]:
+        """Convert string boolean values from NPS API to actual booleans"""
+        if v is None or v == "":
+            return None
+        if isinstance(v, bool):
+            return v
+        if isinstance(v, str):
+            v_lower = v.lower().strip()
+            if v_lower in ['yes', 'true', '1']:
+                return True
+            elif v_lower in ['no', 'false', '0']:
+                return False
+            elif v_lower in ['unknown', 'n/a', 'not available']:
+                return None
+        return None
 ```
 
-Both should return successful responses without validation errors.
+### Step 2: Fix getEvents Missing Required Fields
 
----
+**File to modify:** `src/models/event.py` (or wherever event models are defined)
 
-**IMPORTANT:** After implementing each fix, run the tests immediately to verify the changes work. Continue in a loop of fix → test → fix until all tests pass successfully. Do not move on to the next issue until the current one is completely resolved.
+**Problem:** Fields marked as required are actually optional in NPS API
+**Solution:** Make fields optional and provide sensible defaults
+
+```python
+from pydantic import BaseModel, field_validator
+from typing import Optional, List
+from datetime import datetime
+
+class EventTime(BaseModel):
+    timeStart: Optional[str] = None
+    timeEnd: Optional[str] = None
+    sunriseTimeStart: Optional[str] = None
+    sunsetTimeEnd: Optional[str] = None
+
+class Event(BaseModel):
+    # Core fields that should be present
+    id: str
+    title: str
+    description: Optional[str] = None
+
+    # Previously required fields that should be optional
+    url: Optional[str] = None
+    dateStart: Optional[str] = None
+    dateEnd: Optional[str] = None
+    isRecurring: Optional[bool] = None
+    isAllDay: Optional[bool] = None
+    parkCode: Optional[str] = None
+
+    # Times array with optional fields
+    times: List[EventTime] = []
+
+    @field_validator('isRecurring', 'isAllDay', mode='before')
+    @classmethod
+    def parse_boolean_fields(cls, v: Union[str, bool, None]) -> Optional[bool]:
+        """Convert string boolean values to actual booleans"""
+        if v is None or v == "":
+            return None
+        if isinstance(v, bool):
+            return v
+        if isinstance(v, str):
+            v_lower = v.lower().strip()
+            if v_lower in ['yes', 'true', '1']:
+                return True
+            elif v_lower in ['no', 'false', '0']:
+                return False
+        return None
+```
+
+### Step 3: Update Handler Functions
+
+**Files to check and update:**
+- `src/handlers/get_campgrounds.py`
+- `src/handlers/get_events.py`
+
+**Ensure proper error handling:**
+
+```python
+# In get_campgrounds.py
+async def get_campgrounds(parkCode: Optional[str] = None, limit: Optional[int] = 10, start: Optional[int] = 0, q: Optional[str] = None):
+    try:
+        # Your existing API call logic
+        response = await make_nps_api_call(...)
+
+        # Validate and parse response
+        campgrounds = []
+        for item in response.get('data', []):
+            try:
+                campground = Campground.model_validate(item)
+                campgrounds.append(campground)
+            except ValidationError as e:
+                # Log the validation error but continue processing other items
+                print(f"Validation error for campground {item.get('name', 'unknown')}: {e}")
+                continue
+
+        return {
+            "total": response.get('total', len(campgrounds)),
+            "limit": limit,
+            "start": start,
+            "campgrounds": campgrounds
+        }
+    except Exception as e:
+        return {"error": "processing_error", "message": str(e)}
+
+# Similar pattern for get_events.py
+```
+
+### Step 4: Add Comprehensive Tests
+
+**Create/Update test files:**
+
+```python
+# tests/unit/test_campgrounds.py
+import pytest
+from src.models.campground import CampgroundAmenities, Campground
+
+def test_campground_amenities_boolean_parsing():
+    """Test that string boolean values are properly converted"""
+
+    # Test "Yes" strings
+    amenities_data = {
+        "trashRecyclingCollection": "Yes",
+        "staffOrVolunteerHostOnsite": "YES",
+        "foodStorageLockers": "yes",
+        "cellPhoneReception": "True"
+    }
+    amenities = CampgroundAmenities.model_validate(amenities_data)
+    assert amenities.trashRecyclingCollection is True
+    assert amenities.staffOrVolunteerHostOnsite is True
+    assert amenities.foodStorageLockers is True
+    assert amenities.cellPhoneReception is True
+
+    # Test "No" strings
+    amenities_data = {
+        "trashRecyclingCollection": "No",
+        "staffOrVolunteerHostOnsite": "NO",
+        "foodStorageLockers": "no",
+        "cellPhoneReception": "False"
+    }
+    amenities = CampgroundAmenities.model_validate(amenities_data)
+    assert amenities.trashRecyclingCollection is False
+    assert amenities.staffOrVolunteerHostOnsite is False
+    assert amenities.foodStorageLockers is False
+    assert amenities.cellPhoneReception is False
+
+    # Test unknown/empty values
+    amenities_data = {
+        "trashRecyclingCollection": "Unknown",
+        "staffOrVolunteerHostOnsite": "",
+        "foodStorageLockers": "N/A",
+        "cellPhoneReception": None
+    }
+    amenities = CampgroundAmenities.model_validate(amenities_data)
+    assert amenities.trashRecyclingCollection is None
+    assert amenities.staffOrVolunteerHostOnsite is None
+    assert amenities.foodStorageLockers is None
+    assert amenities.cellPhoneReception is None
+
+# tests/unit/test_events.py
+import pytest
+from src.models.event import Event, EventTime
+
+def test_event_optional_fields():
+    """Test that events can be created with minimal required fields"""
+
+    # Minimal event data
+    event_data = {
+        "id": "test-event-1",
+        "title": "Test Event"
+    }
+    event = Event.model_validate(event_data)
+    assert event.id == "test-event-1"
+    assert event.title == "Test Event"
+    assert event.url is None
+    assert event.dateStart is None
+    assert event.isRecurring is None
+    assert event.times == []
+
+def test_event_boolean_parsing():
+    """Test boolean field parsing for events"""
+
+    event_data = {
+        "id": "test-event-1",
+        "title": "Test Event",
+        "isRecurring": "Yes",
+        "isAllDay": "No"
+    }
+    event = Event.model_validate(event_data)
+    assert event.isRecurring is True
+    assert event.isAllDay is False
+
+# tests/integration/test_mcp_endpoints.py
+import pytest
+from src.handlers.get_campgrounds import get_campgrounds
+from src.handlers.get_events import get_events
+
+@pytest.mark.asyncio
+async def test_get_campgrounds_integration():
+    """Test that getCampgrounds endpoint works without validation errors"""
+    result = await get_campgrounds(parkCode="yose", limit=2)
+
+    # Should not have validation errors
+    assert "error" not in result or result.get("error") != "validation_error"
+    assert "campgrounds" in result
+    assert isinstance(result["campgrounds"], list)
+
+@pytest.mark.asyncio
+async def test_get_events_integration():
+    """Test that getEvents endpoint works without validation errors"""
+    result = await get_events(parkCode="yose", limit=2)
+
+    # Should not have validation errors
+    assert "error" not in result or result.get("error") != "validation_error"
+    # Events might be empty, but structure should be correct
+    assert "total" in result or "events" in result
+```
+
+## Execution Instructions
+
+### Phase 1: Implement Fixes
+1. **Update Pydantic Models**: Modify campground and event models with proper field validators
+2. **Update Handler Functions**: Ensure proper error handling and validation
+3. **Test Data Validation**: Create unit tests for the new validation logic
+
+### Phase 2: Test and Iterate
+1. **Run Unit Tests**: Execute all unit tests to verify model validation works
+   ```bash
+   python -m pytest tests/unit/ -v
+   ```
+
+2. **Run Integration Tests**: Test the actual MCP endpoints
+   ```bash
+   python -m pytest tests/integration/ -v
+   ```
+
+3. **Manual MCP Testing**: Test the actual MCP server endpoints
+   ```bash
+   # Test getCampgrounds
+   python -c "
+   import asyncio
+   from src.handlers.get_campgrounds import get_campgrounds
+   result = asyncio.run(get_campgrounds(parkCode='yose', limit=2))
+   print('getCampgrounds result:', result)
+   "
+
+   # Test getEvents
+   python -c "
+   import asyncio
+   from src.handlers.get_events import get_events
+   result = asyncio.run(get_events(parkCode='yose', limit=2))
+   print('getEvents result:', result)
+   "
+   ```
+
+### Phase 3: Fix-Test Loop
+**CRITICAL**: Continue this loop until ALL tests pass:
+
+1. **Run all tests**
+2. **If any test fails**:
+   - Analyze the failure
+   - Fix the specific issue
+   - Run tests again
+3. **Repeat until zero test failures**
+4. **Verify MCP endpoints work correctly**
+
+### Success Criteria
+- ✅ All unit tests pass
+- ✅ All integration tests pass
+- ✅ getCampgrounds returns data without validation errors
+- ✅ getEvents returns data without validation errors
+- ✅ Manual MCP testing shows both endpoints working
+
+## Common Pitfalls to Avoid
+
+1. **Don't make all fields required** - NPS API has inconsistent data
+2. **Handle edge cases in validators** - Empty strings, "Unknown", "N/A" values
+3. **Graceful degradation** - If one item fails validation, continue processing others
+4. **Proper error logging** - Log validation failures for debugging
+5. **Test with real API data** - Don't just test with mock data
+
+## Final Verification
+
+After implementing all fixes, verify success by running:
+
+```bash
+# Full test suite
+python -m pytest tests/ -v
+
+# Manual endpoint verification
+python test_mcp_endpoints_manual.py
+```
+
+Both getCampgrounds and getEvents should return valid data structures without any validation errors.
